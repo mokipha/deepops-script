@@ -1,0 +1,100 @@
+image:
+  debug: true
+
+auth:
+  postgresPassword: "postgresql_1123"
+  password: "postgresql_1123"
+
+primary:
+  initdb:
+    user: "postgres"
+    password: "postgresql_1123"
+    scripts:
+      00_init_db.sql: |
+        create database dex;
+        \c dex;
+        CREATE TABLE haiqv_user 
+        (
+          email varchar NOT NULL,
+          username varchar NOT NULL,
+          user_id varchar NOT NULL,
+          is_admin bool NOT NULL DEFAULT false,
+          reg_date timestamp NULL DEFAULT now(),
+          mod_date timestamp NULL DEFAULT now(),
+          password_date timestamp NULL DEFAULT now(),
+          fail_login int4 NULL DEFAULT 0,
+          "password" bytea NULL,
+          latest_token varchar NULL,
+          latest_session varchar NULL,
+          CONSTRAINT haiqv_user_pkey PRIMARY KEY (email)
+        );
+        INSERT INTO haiqv_user
+        (
+          email, username, user_id, is_admin, reg_date, mod_date, password_date, fail_login, "password", latest_token, latest_session
+        ) VALUES(
+          'haiqv@hanwha.com', 
+          'haiqv', 
+          'haiqv', 
+          true, 
+          now(), 
+          now(), 
+          now(), 
+          0, 
+          (decode('243262243130246d76617043534855554332433243492f68744a754f2e68702e61316c62465136766f6869524732737a764d6c4e325a636d63447253', 'hex')),
+          '', 
+          ''
+        );
+        CREATE TABLE public.haiqv_grafana (
+          id serial4 NOT NULL,
+          panel varchar NOT NULL,
+          "order" int4 NOT NULL DEFAULT 1,
+          description varchar NULL,
+          url varchar NOT NULL,
+          reg_date timestamp NULL DEFAULT now(),
+          modifier varchar NULL,
+          CONSTRAINT haiqv_grafana_pkey PRIMARY KEY (id)
+        );
+        INSERT INTO public.haiqv_grafana (panel,"order",description,url,reg_date,modifier) VALUES
+           ('G_CLUSTER_DASHBOARD',1,'클러스터 대시보드','/grafana/d/USMK9o2Vk/cluster?orgId=2&refresh=30s','2023-01-11 14:05:47.922889','ziippy'),
+           ('G_WORKSPACE_DASHBOARD',1,'워크스페이스 대시보드','/grafana/d/n_DVQ124k/workspace?orgId=2&refresh=30s','2023-01-12 10:00:13.217045','ziippy'),
+           ('G_POD',1,'Pod 별 CPU 사용 그래프','/grafana/d-solo/r3mNGy5Vy/notebook?orgId=2&refresh=30s&panelId=81','2023-01-10 12:07:50.765972','ziippy'),
+           ('G_POD',2,'Pod 별 GPU 사용률','/grafana/d-solo/r3mNGy5Vy/notebook?orgId=2&refresh=30s&panelId=80','2023-01-10 12:07:50.765972','ziippy'),
+           ('G_POD',3,'Pod 별 MEM 사용 그래프','/grafana/d-solo/r3mNGy5Vy/notebook?orgId=2&refresh=30s&panelId=83','2023-01-10 12:07:50.765972','ziippy'),
+           ('G_POD',4,'Pod 별 CPU 사용률','/grafana/d-solo/r3mNGy5Vy/notebook?orgId=2&refresh=30s&panelId=84','2023-01-10 12:07:50.765972','ziippy'),
+           ('G_POD',5,'Pod 별 CPU 사용 그래프','/grafana/d-solo/r3mNGy5Vy/notebook?orgId=2&refresh=30s&panelId=53','2023-01-10 12:07:50.765972','ziippy'),
+           ('G_POD',6,'Pod 별 CPU 사용률','/grafana/d-solo/r3mNGy5Vy/notebook?orgId=2&refresh=30s&panelId=82','2023-01-10 12:07:50.765972','ziippy'),
+           ('G_WORKSPACE_STATUS',1,'워크스페이스별 전체/할당/사용 현황 Card 형','/grafana/d-solo/r3mNGy5Vl/namespace?orgId=2&refresh=30s&var-node=All&panelId=83','2023-01-09 14:01:34.387816','ziippy'),
+           ('G_CLUSTER_AVAILABLE',1,'클러스터 내 가용 현황 Card 형','/grafana/d-solo/29KRXch4z/node?orgId=2&refresh=30s&var-namespace=All&panelId=155','2023-01-09 14:01:34.387816','ziippy');
+        INSERT INTO public.haiqv_grafana (panel,"order",description,url,reg_date,modifier) VALUES
+           ('G_WORKSPACE_AVAILABLE',1,'워크스페이스별 CPU 가용 현황 Card 형','/grafana/d-solo/r3mNGy5Vy/notebook?orgId=2&refresh=30s&panelId=97','2023-01-09 14:01:34.387816','ziippy'),
+           ('G_WORKSPACE_AVAILABLE',2,'워크스페이스별 GPU 가용 현황 Card 형','/grafana/d-solo/r3mNGy5Vy/notebook?orgId=2&refresh=30s&panelId=98','2023-01-09 14:01:34.387816','ziippy'),
+           ('G_WORKSPACE_AVAILABLE',3,'워크스페이스별 Memory 가용 현황 Card 형','/grafana/d-solo/r3mNGy5Vy/notebook?orgId=2&refresh=30s&panelId=99','2023-01-09 14:01:34.387816','ziippy'),
+           ('G_WORKSPACE_AVAILABLE',4,'워크스페이스별 Storage 가용 현황 Card 형','/grafana/d-solo/r3mNGy5Vy/notebook?orgId=2&refresh=30s&panelId=100','2023-01-09 14:01:34.387816','ziippy');
+        CREATE TABLE haiqv_member (
+          id serial4 NOT NULL,
+          reg_date timestamp NOT NULL DEFAULT now(),
+          mod_date timestamp NOT NULL DEFAULT now(),
+          modifier varchar NOT NULL,
+          user_email varchar NULL,
+          workspace_id int4 NULL,
+          CONSTRAINT "PK_97cbbe986ce9d14ca5894fdc072" PRIMARY KEY (id)
+        );
+        CREATE TABLE haiqv_workspace (
+          id serial4 NOT NULL,
+          "name" varchar NOT NULL,
+          "open" varchar NOT NULL,
+          "close" varchar NOT NULL,
+          gpu int4 NOT NULL,
+          cpu float4 NOT NULL,
+          memory int4 NOT NULL,
+          "storage" int4 NOT NULL,
+          status varchar NOT NULL,
+          reg_date timestamp NOT NULL DEFAULT now(),
+          mod_date timestamp NOT NULL DEFAULT now(),
+          modifier varchar NOT NULL,
+          owner_email varchar NULL,
+          CONSTRAINT "PK_ca86b6f9b3be5fe26d307d09b49" PRIMARY KEY (id)
+        );
+        ALTER TABLE haiqv_workspace ADD CONSTRAINT "FK_8a81e7f0e4802359f7c50c93294" FOREIGN KEY (owner_email) REFERENCES haiqv_user(email);
+        ALTER TABLE haiqv_member ADD CONSTRAINT "FK_93375b1c1846744c36dfe96ae52" FOREIGN KEY (user_email) REFERENCES haiqv_user(email);
+        ALTER TABLE haiqv_member ADD CONSTRAINT "FK_e80fc89cfe6e552169a10be8d2d" FOREIGN KEY (workspace_id) REFERENCES haiqv_workspace(id);

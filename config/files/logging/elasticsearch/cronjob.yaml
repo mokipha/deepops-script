@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: elasticsearch-delete-index
+  namespace: logging
+spec:
+  schedule: "0 0 * * *"
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          containers:
+          - name: delete-index
+            image: skxogh252/curl-coreutils:7.87.0
+            command:
+              - "/bin/sh"
+              - "-c"
+              - |
+                HOST="http://elasticsearch-master:9200"
+
+                delete_document () {
+                  local statuses=""
+                  local aliases="$@"
+                  local target_date=$(date -d "1 days 3 months ago" +%F)
+                  set -- -XPOST -s --fail -L
+
+                  if [ -n "${ELASTICSEARCH_USERNAME}" ] && [ -n "${ELASTICSEARCH_PASSWORD}" ]; then
+                    set -- "$@" -u "${ELASTICSEARCH_USERNAME}:${ELASTICSEARCH_PASSWORD}"
+                  fi
+
+                  for alias in ${aliases}
+                  do
+                    DELETION_STATUS=$(curl --output /dev/null --write-out "%{http_code}" -k "$@" "${HOST}/${alias}/_delete_by_query" -H 'kbn-xsrf: true' -H 'Content-Type: application/json' -d '{"query": {"range": {"@timestamp": {"lt": '"\"${target_date}T00:00:00.000Z\""'}}}}')
+
+                    if [ "${DELETION_STATUS}" -eq 200 ]; then
+                      echo "Info: documents less then '${target_date}T00:00:00.000Z' in '${alias}' index deleted"
+                    else
+                      echo "Error: Got HTTP code ${DELETION_STATUS} for deleting document less then '${target_date}T00:00:00.000Z' in '${alias}' index, but expected 200"
+                    fi
+                    statuses="${statuses} ${DELETION_STATUS}"
+                  done
+
+                  for status in ${statuses}
+                  do
+                    if [ "${status}" -ne 200 ]; then
+                      echo "Error: document deletion failed"
+                      exit 1
+                    fi
+                  done
+
+                  echo "Info: documents deletion completed"
+                  exit 0
+                }
+
+                delete_document "log" "metric"
+
+          restartPolicy: OnFailure

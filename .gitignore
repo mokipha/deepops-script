@@ -1,0 +1,19 @@
+# ansible
+*.retry
+
+# misc.
+.*.swp
+
+# project-specific
+/admin.conf
+# /config*/
+/config/kubeflow-install/
+!/config.example/
+/roles/galaxy/
+/collections/*
+/k8s-config/
+/kubectl
+/tridentctl
+
+# etc
+.vscode/

@@ -1,0 +1,36 @@
+[all]
+dev-machine ansible_host=172.30.1.38
+wow-machine ansible_host=172.30.1.31
+#mgmt01     ansible_host=10.0.0.1
+#mgmt02     ansible_host=10.0.0.2
+#mgmt03     ansible_host=10.0.0.3
+#login01    ansible_host=10.0.1.1
+#gpu01      ansible_host=10.0.2.1
+#gpu02      ansible_host=10.0.2.2
+
+######
+# KUBERNETES
+######
+[kube-master]
+dev-machine
+#mgmt01
+#mgmt02
+#mgmt03
+
+# Odd number of nodes required
+[etcd]
+dev-machine
+#mgmt01
+#mgmt02
+#mgmt03
+
+# Also add mgmt/master nodes here if they will run non-control plane jobs
+[kube-node]
+wow-machine
+#gpu01
+#gpu02
+
+[k8s-cluster:children]
+kube-master
+kube-node
+

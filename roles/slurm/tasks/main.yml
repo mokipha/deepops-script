@@ -1,0 +1,37 @@
+---
+- name: Install CUDA when we require NVML support for autodetection
+  include_role:
+    name: nvidia_cuda
+  when: slurm_autodetect_nvml|default(false)
+
+- include: setup-role.yml
+
+- include: build.yml
+  tags: build
+  when: slurm_workflow_build
+
+- include: service-files.yml
+
+- include: setup-user.yml
+
+- include: controller.yml
+  when: is_controller
+
+- include: compute.yml
+  when: is_compute
+
+- include: misc-node.yml
+  when: (not is_compute) and (not is_controller)
+
+- include: shmfix.yml
+  when: is_compute and slurm_fix_shm
+
+- include: logging.yml
+  tags:
+  - rsyslog
+  - logging
+
+- include: undrain.yml
+  when: is_compute
+
+- include: build-cleanup.yml
